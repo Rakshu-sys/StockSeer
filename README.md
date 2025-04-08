@@ -12,16 +12,10 @@ StockSeer is a machine learning project designed to predict stock market trends 
    The system will automatically unzip the file to a folder named `ensf444_group7` in your `Downloads` directory.
 
 3. **Install Dependencies**  
-   Ensure that the following libraries are installed:
-   - `pandas`
-   - `scikit-learn`
-   - `matplotlib`
+   Ensure you have the following libraries installed:
+   
 
-   To install the required dependencies, run:
-   ```bash
-   pip install pandas scikit-learn matplotlib
-
-4. **Running the system**  
+5. **Running the system**  
    use the command: python main.py in the directory you have the main.py file
 
 ### Key Characteristics of the models trained
