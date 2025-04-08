@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsRegressor
 
 
 DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
@@ -141,8 +142,45 @@ def run_random_forest(df, symbol, target):
 
 
 def run_knn(df, symbol, target):
-    print("K-Nearest Neighbors Regressor not implemented yet.")
-    # TODO: Add implementation
+    X, y = preprocess_data(df, target)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
+
+    # Pipeline with StandardScaler and KNN
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('knn', KNeighborsRegressor())
+    ])
+
+    # Hyperparameters for tuning
+    param_grid = {
+        'knn__n_neighbors': [3, 5, 7, 9],
+        'knn__weights': ['uniform', 'distance'],
+        'knn__metric': ['euclidean', 'manhattan']
+    }
+
+    # TimeSeriesSplit for time-based validation
+    tscv = TimeSeriesSplit(n_splits=5)
+
+    # GridSearch with cross-validation
+    grid_search = GridSearchCV(
+        pipeline,
+        param_grid,
+        cv=tscv,
+        n_jobs=-1,
+        scoring='neg_mean_squared_error',
+        verbose=0
+    )
+
+    print("\nTraining K-Nearest Neighbors Regressor ...")
+    grid_search.fit(X_train, y_train)
+
+    best_model = grid_search.best_estimator_
+    print("\nBest Parameters:", grid_search.best_params_)
+
+    predictions = best_model.predict(X_test)
+
+    evaluate_model(y_test, predictions)
+    plot_results(y_test, predictions, f"{symbol} - Predicting {target} with KNN")
 
 
 def compare_all_models(df, symbol, target):
