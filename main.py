@@ -1,3 +1,4 @@
+# Importing the necessary libraries
 import os
 import pandas as pd
 import zipfile
@@ -5,12 +6,17 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.preprocessing import StandardScaler
 
 
 DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
 ZIP_NAME = "archive.zip"
 UNZIP_DIR = os.path.join(DOWNLOADS_DIR, "ensf444_group7")
 
+# Unzipping the folder to access dataset
 def unzip_dataset():
     zip_path = os.path.join(DOWNLOADS_DIR, ZIP_NAME)
     if not os.path.exists(zip_path):
@@ -27,7 +33,7 @@ def unzip_dataset():
 def list_csv_files():
     return sorted([f for f in os.listdir(UNZIP_DIR) if f.endswith(".csv")])
 
-
+# Loading the stocks file
 def load_csv(file_name):
     path = os.path.join(UNZIP_DIR, file_name)
     df = pd.read_csv(path)
@@ -38,7 +44,7 @@ def load_csv(file_name):
 
     return df
 
-
+# Dataframe preprocessing
 def preprocess_dataframe(df):
     df = df.ffill().dropna()
 
@@ -47,7 +53,7 @@ def preprocess_dataframe(df):
 
     return df.dropna()
 
-
+# Data preprocessing
 def preprocess_data(df, target):
     df = df.copy()
     df[f"{target}_lag1"] = df[target].shift(1)
@@ -57,14 +63,14 @@ def preprocess_data(df, target):
     y = df[target]
     return X, y
 
-
+# Model evaluation through metrics
 def evaluate_model(y_test, predictions):
     print("\nModel Performance:")
     print("MAE:", round(mean_absolute_error(y_test, predictions), 2))
     print("MSE:", round(mean_squared_error(y_test, predictions), 2))
     print("R²:", round(r2_score(y_test, predictions), 4))
 
-
+# Plotting the results 
 def plot_results(y_test, predictions, title):
     plt.figure(figsize=(14, 6))
     plt.plot(y_test.values, label="Actual", linewidth=1)
@@ -77,7 +83,7 @@ def plot_results(y_test, predictions, title):
     plt.tight_layout()
     plt.show()
 
-
+# Linear Regression model
 def run_linear_regression(df, symbol, target):
     X, y = preprocess_data(df, target)
     X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
@@ -89,9 +95,49 @@ def run_linear_regression(df, symbol, target):
     evaluate_model(y_test, predictions)
     plot_results(y_test, predictions, f"{symbol} - Predicting {target} with Linear Regression")
 
+    
+# Random forest Regressor model
 def run_random_forest(df, symbol, target):
-    print("Random Forest Regressor not implemented yet.")
-    # TODO: Add implementation
+    X, y = preprocess_data(df, target)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
+
+    # Pipeline
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('rf', RandomForestRegressor(random_state=42))
+    ])
+
+    # Hyperparameters for tuning
+    param_grid = {
+        'rf__n_estimators': [50, 100, 150],
+        'rf__max_depth': [None, 5, 10],
+        'rf__min_samples_split': [2, 5],
+        'rf__min_samples_leaf': [1, 2],
+    }
+
+    # TimeSeriesSplit for better time-based validation
+    tscv = TimeSeriesSplit(n_splits=5)
+
+    # GridSearch with cross-validation
+    grid_search = GridSearchCV(
+        pipeline,
+        param_grid,
+        cv=tscv,
+        n_jobs=-1,
+        scoring='neg_mean_squared_error',
+        verbose=0
+    )
+
+    print("\nTraining Random Forest Regressor ...")
+    grid_search.fit(X_train, y_train)
+
+    best_model = grid_search.best_estimator_
+    print("\nBest Parameters:", grid_search.best_params_)
+
+    predictions = best_model.predict(X_test)
+
+    evaluate_model(y_test, predictions)
+    plot_results(y_test, predictions, f"{symbol} - Predicting {target} with Random Forest")
 
 
 def run_knn(df, symbol, target):
