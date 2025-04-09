@@ -198,7 +198,7 @@ def main():
 
     while True:
         print("\nRefer to 'available_stocks.csv' to see valid stock symbols.")
-        symbol = input("Enter stock symbol (e.g., AAPL), or type 'exit' to quit: ").strip().upper()
+        symbol = input("Enter stock symbol (e.g., BTF, SCJ), or type 'exit' to quit: ").strip().upper()
 
         if symbol.lower() == "exit":
             print("Exiting the program.")
