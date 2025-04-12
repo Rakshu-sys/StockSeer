@@ -1,3 +1,6 @@
+# Note: Most of this code was written using material learned in the course and from previous assignments. 
+# ChatGPT (OpenAI, 2025) was used to help fix errors,improve some parts of the code, and optimize the machine learning models.
+
 #Please make sure 'archive.zip' is placed in your Downloads folder before running this script.
 
 # Import the needed libraries
